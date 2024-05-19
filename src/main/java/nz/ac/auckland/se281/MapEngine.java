@@ -20,9 +20,11 @@ public class MapEngine {
     List<String> countries = Utils.readCountries();
     List<String> adjacencies = Utils.readAdjacencies();
     // add code here to create your data structures
+    // creates the world map 
     Graph worldMap = new Graph();
     for (int i = 0; i < countries.size(); i++) {
       countryInfo = countries.get(i).split(",");
+      // stores info for each country
       country = new Country(countryInfo[0], countryInfo[1], Integer.parseInt(countryInfo[2]));
       worldMap.addCountry(country);
       countryList.add(country);
@@ -32,6 +34,7 @@ public class MapEngine {
       for (int j = 1; j < adjacentCountriesInfo.length; j++) {
         for (int k = 0; k < countryList.size(); k++) {
           if (countryList.get(k).getName() == adjacentCountriesInfo[j]) {
+            // adds every given connection between all the countries
             worldMap.addConnection(countryList.get(i), countryList.get(k));
           }
         }
@@ -43,16 +46,36 @@ public class MapEngine {
   public void showInfoCountry() {
     // add code here
     String userInput;
-    Country country;
+    boolean countryFound = false;
     MessageCli.INSERT_COUNTRY.printMessage();
     userInput = Utils.scanner.nextLine();
+    userInput = Utils.capitalizeFirstLetterOfEachWord(userInput);
+    while (countryFound == false) {
+      try {
+        countryExistCheck(userInput);
+        countryFound = true;
+      } catch (InvalidCountryException e) {
+        MessageCli.INVALID_COUNTRY.printMessage(userInput);
+        MessageCli.INSERT_COUNTRY.printMessage();
+        userInput = Utils.scanner.nextLine();
+        userInput = Utils.capitalizeFirstLetterOfEachWord(userInput);
+      }
+    }
+  }
+
+  public void countryExistCheck(String userInput) throws InvalidCountryException {
+    Country country;
     for (int i = 0; i < countryList.size(); i++) {
       country = countryList.get(i);
+      // finds the country that the user inputs and then displays the info of 
+      // the country.
       if (userInput.equals(country.getName())) {
         MessageCli.COUNTRY_INFO.printMessage(
             country.getName(), country.getContinent(), String.valueOf(country.getTaxes()));
+        return;
       }
     }
+    throw new InvalidCountryException(userInput); 
   }
 
   /** this method is invoked when the user run the command route. */

@@ -37,6 +37,11 @@ public class Country {
   public int getTaxes() {
     return taxes;
   }
+  
+  @Override
+  public String toString() {
+    return name;
+  }
 
   @Override
   public boolean equals(Object obj) {

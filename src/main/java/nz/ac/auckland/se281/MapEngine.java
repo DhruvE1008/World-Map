@@ -1,11 +1,16 @@
 package nz.ac.auckland.se281;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 /** This class is the main entry point. */
 public class MapEngine {
   private ArrayList<Country> countryList = new ArrayList<>();
+  private Graph worldMap;
 
   public MapEngine() {
     // add other code here if you want
@@ -20,8 +25,8 @@ public class MapEngine {
     List<String> countries = Utils.readCountries();
     List<String> adjacencies = Utils.readAdjacencies();
     // add code here to create your data structures
-    // creates the world map 
-    Graph worldMap = new Graph();
+    // creates the world map
+    this.worldMap = new Graph();
     for (int i = 0; i < countries.size(); i++) {
       countryInfo = countries.get(i).split(",");
       // stores info for each country
@@ -33,7 +38,7 @@ public class MapEngine {
       adjacentCountriesInfo = adjacencies.get(i).split(",");
       for (int j = 1; j < adjacentCountriesInfo.length; j++) {
         for (int k = 0; k < countryList.size(); k++) {
-          if (countryList.get(k).getName() == adjacentCountriesInfo[j]) {
+          if (countryList.get(k).getName().equals(adjacentCountriesInfo[j])) {
             // adds every given connection between all the countries
             worldMap.addConnection(countryList.get(i), countryList.get(k));
           }
@@ -63,11 +68,17 @@ public class MapEngine {
     }
   }
 
+  /**
+   * Checks if the country that the user input is a valid country.
+   *
+   * @param userInput the country that the user inputs
+   * @throws InvalidCountryException an error that occurs when the country is invalid.
+   */
   public void countryExistCheck(String userInput) throws InvalidCountryException {
     Country country;
     for (int i = 0; i < countryList.size(); i++) {
       country = countryList.get(i);
-      // finds the country that the user inputs and then displays the info of 
+      // finds the country that the user inputs and then displays the info of
       // the country.
       if (userInput.equals(country.getName())) {
         MessageCli.COUNTRY_INFO.printMessage(
@@ -75,9 +86,73 @@ public class MapEngine {
         return;
       }
     }
-    throw new InvalidCountryException(userInput); 
+    throw new InvalidCountryException(userInput);
   }
 
   /** this method is invoked when the user run the command route. */
-  public void showRoute() {}
+  public void showRoute() {
+    Country startCountry = null;
+    Country endCountry = null;
+    String startCountryString, endCountryString;
+    List<Country> route = new ArrayList<>();
+    StringBuilder sb = new StringBuilder();
+    MessageCli.INSERT_SOURCE.printMessage();
+    startCountryString = Utils.scanner.nextLine();
+    MessageCli.INSERT_DESTINATION.printMessage();
+    endCountryString = Utils.scanner.nextLine();
+    for (int i = 0; i < countryList.size(); i++) {
+      if (countryList.get(i).getName().equals(startCountryString)) {
+        startCountry = countryList.get(i);
+      } else if (countryList.get(i).getName().equals(endCountryString)) {
+        endCountry = countryList.get(i);
+      }
+    }
+    route = findRouteTravelled(startCountry, endCountry);
+    sb.append("[");
+    for (int l = route.size()-1; l > -1; l--) {
+      sb.append(route.get(l));
+      if (l == 0) {
+        sb.append("]");
+      } else {
+        sb.append(", ");
+      }
+    }
+    MessageCli.ROUTE_INFO.printMessage(sb.toString());
+  }
+
+  public List<Country> findRouteTravelled(Country startCountry, Country endCountry) {
+    List<Country> travelledCountry = new ArrayList<>();
+    Queue<Country> queue = new LinkedList<>();
+    List<Country> shortestPath = new LinkedList<>();
+    Country currentTravelledCountry;
+    int counter = 0;
+    queue.add(startCountry);
+    travelledCountry.add(startCountry);
+    while (!queue.isEmpty()) {
+      Country currentCountry = queue.poll();
+      for (Country adjCountry : worldMap.getAdjacencies().get(currentCountry)) {
+        if (!travelledCountry.contains(adjCountry)) {
+          travelledCountry.add(adjCountry);
+          queue.add(adjCountry);
+        }
+      }
+    }
+    currentTravelledCountry = endCountry;
+    while (counter < travelledCountry.size()) {
+      for (int m = 0; m < worldMap.getAdjacencies(travelledCountry.get(counter)).size(); m++) {
+        if (worldMap.getAdjacencies(travelledCountry.get(counter)).get(m).equals(currentTravelledCountry)) {
+          shortestPath.add(currentTravelledCountry);
+          currentTravelledCountry = travelledCountry.get(counter);
+          if (currentTravelledCountry.equals(startCountry)){
+            shortestPath.add(startCountry);
+            return shortestPath;
+          }
+          counter = -1;
+          break;
+        }
+      }
+      counter++;
+    }
+    return null;
+  }
 }

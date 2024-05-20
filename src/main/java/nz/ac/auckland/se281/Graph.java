@@ -12,6 +12,14 @@ public class Graph {
     this.adjCountries = new HashMap<>();
   }
 
+  public Map<Country, List<Country>> getAdjacencies() {
+    return adjCountries;
+  }
+
+  public List<Country> getAdjacencies(Country country) {
+    return adjCountries.get(country);
+  }
+
   /**
    * Adds the country to the world map.
    *

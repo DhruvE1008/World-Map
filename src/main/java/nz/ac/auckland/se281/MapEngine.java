@@ -128,6 +128,10 @@ public class MapEngine {
         endCountryString = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
       }
     }
+    if (startCountryString.equals(endCountryString)) {
+      MessageCli.NO_CROSSBORDER_TRAVEL.printMessage();
+      return;
+    }
     // finds the countries corresponding to the user input;
     for (int i = 0; i < countryList.size(); i++) {
       if (countryList.get(i).getName().equals(startCountryString)) {

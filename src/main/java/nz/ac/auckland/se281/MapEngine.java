@@ -53,17 +53,15 @@ public class MapEngine {
     String userInput;
     boolean countryFound = false;
     MessageCli.INSERT_COUNTRY.printMessage();
-    userInput = Utils.scanner.nextLine();
-    userInput = Utils.capitalizeFirstLetterOfEachWord(userInput);
+    userInput = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
     while (countryFound == false) {
       try {
-        countryExistCheck(userInput);
+        countryExistCheck(userInput, true);
         countryFound = true;
       } catch (InvalidCountryException e) {
         MessageCli.INVALID_COUNTRY.printMessage(userInput);
         MessageCli.INSERT_COUNTRY.printMessage();
-        userInput = Utils.scanner.nextLine();
-        userInput = Utils.capitalizeFirstLetterOfEachWord(userInput);
+        userInput = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
       }
     }
   }
@@ -74,15 +72,17 @@ public class MapEngine {
    * @param userInput the country that the user inputs
    * @throws InvalidCountryException an error that occurs when the country is invalid.
    */
-  public void countryExistCheck(String userInput) throws InvalidCountryException {
+  public void countryExistCheck(String userInput, boolean showCountryInfo) throws InvalidCountryException {
     Country country;
     for (int i = 0; i < countryList.size(); i++) {
       country = countryList.get(i);
       // finds the country that the user inputs and then displays the info of
       // the country.
       if (userInput.equals(country.getName())) {
-        MessageCli.COUNTRY_INFO.printMessage(
-            country.getName(), country.getContinent(), String.valueOf(country.getTaxes()));
+        if (showCountryInfo == true) {
+          MessageCli.COUNTRY_INFO.printMessage(
+              country.getName(), country.getContinent(), String.valueOf(country.getTaxes()));
+        }
         return;
       }
     }
@@ -91,9 +91,11 @@ public class MapEngine {
 
   /** this method is invoked when the user run the command route. */
   public void showRoute() {
-    String startCountryString, endCountryString;
+    String startCountryString;
+    String endCountryString;
     boolean countryFound = false;
     int count;
+    int totalTaxes = 0;
     Country startCountry = null;
     Country endCountry = null;
     StringBuilder sb1 = new StringBuilder();
@@ -101,33 +103,29 @@ public class MapEngine {
     Set<String> continents = new LinkedHashSet<>();
     // asks for starting country;
     MessageCli.INSERT_SOURCE.printMessage();
-    startCountryString = Utils.scanner.nextLine();
-    startCountryString = Utils.capitalizeFirstLetterOfEachWord(startCountryString);
+    startCountryString = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
     while (countryFound == false) {
       try {
-        countryExistCheck(startCountryString);
+        countryExistCheck(startCountryString, false);
         countryFound = true;
       } catch (InvalidCountryException e) {
         MessageCli.INVALID_COUNTRY.printMessage(startCountryString);
         MessageCli.INSERT_COUNTRY.printMessage();
-        startCountryString = Utils.scanner.nextLine();
-        startCountryString = Utils.capitalizeFirstLetterOfEachWord(startCountryString);
+        startCountryString = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
       }
     }
     countryFound = false;
     // asks for end country;
     MessageCli.INSERT_DESTINATION.printMessage();
-    endCountryString = Utils.scanner.nextLine();
-    endCountryString = Utils.capitalizeFirstLetterOfEachWord(endCountryString);
+    endCountryString = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
     while (countryFound == false) {
       try {
-        countryExistCheck(endCountryString);
+        countryExistCheck(endCountryString, false);
         countryFound = true;
       } catch (InvalidCountryException e) {
         MessageCli.INVALID_COUNTRY.printMessage(endCountryString);
         MessageCli.INSERT_COUNTRY.printMessage();
-        endCountryString = Utils.scanner.nextLine();
-        endCountryString = Utils.capitalizeFirstLetterOfEachWord(endCountryString);
+        endCountryString = Utils.capitalizeFirstLetterOfEachWord(Utils.scanner.nextLine());
       }
     }
     // finds the countries corresponding to the user input;
@@ -146,12 +144,14 @@ public class MapEngine {
     for (int l = (route.size() - 1); l > -1; l--) {
       sb1.append(route.get(l));
       continents.add(route.get(l).getContinent());
+      totalTaxes += route.get(l).getTaxes();
       if (l == 0) {
         sb1.append("]");
       } else {
         sb1.append(", ");
       }
     }
+    totalTaxes -= route.get(route.size()-1).getTaxes();
     // prints the route of the countries
     MessageCli.ROUTE_INFO.printMessage(sb1.toString());
     count = 0;
@@ -166,6 +166,7 @@ public class MapEngine {
       }
     }
     MessageCli.CONTINENT_INFO.printMessage(sb2.toString());
+    MessageCli.TAX_INFO.printMessage(String.valueOf(totalTaxes));
   }
 
   /**
@@ -173,7 +174,7 @@ public class MapEngine {
    *
    * @param startCountry the country the user wishes to start at
    * @param endCountry the country the user wishes to end at
-   * @return the shortest route in List<Country> form.
+   * @return the shortest route that the user can travel from the start to end country.
    */
   public List<Country> findRouteTravelled(Country startCountry, Country endCountry) {
     List<Country> travelledCountry = new ArrayList<>();

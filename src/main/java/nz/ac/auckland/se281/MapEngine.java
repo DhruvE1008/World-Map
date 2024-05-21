@@ -1,11 +1,11 @@
 package nz.ac.auckland.se281;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 /** This class is the main entry point. */
 public class MapEngine {
@@ -92,10 +92,13 @@ public class MapEngine {
   /** this method is invoked when the user run the command route. */
   public void showRoute() {
     String startCountryString, endCountryString;
+    boolean countryFound = false;
+    int count;
     Country startCountry = null;
     Country endCountry = null;
-    boolean countryFound = false;
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb1 = new StringBuilder();
+    StringBuilder sb2 = new StringBuilder();
+    Set<String> continents = new LinkedHashSet<>();
     // asks for starting country;
     MessageCli.INSERT_SOURCE.printMessage();
     startCountryString = Utils.scanner.nextLine();
@@ -139,22 +142,35 @@ public class MapEngine {
     List<Country> route = findRouteTravelled(startCountry, endCountry);
     // appends the route of countries into a string and reverses the order
     // of the countries
-    sb.append("[");
+    sb1.append("[");
     for (int l = (route.size() - 1); l > -1; l--) {
-      sb.append(route.get(l));
+      sb1.append(route.get(l));
+      continents.add(route.get(l).getContinent());
       if (l == 0) {
-        sb.append("]");
+        sb1.append("]");
       } else {
-        sb.append(", ");
+        sb1.append(", ");
       }
     }
     // prints the route of the countries
-    MessageCli.ROUTE_INFO.printMessage(sb.toString());
+    MessageCli.ROUTE_INFO.printMessage(sb1.toString());
+    count = 0;
+    sb2.append("[");
+    for (String continent : continents) {
+      sb2.append(continent);
+      count++;
+      if (count == continents.size()) {
+        sb2.append("]");
+      } else {
+        sb2.append(", ");
+      }
+    }
+    MessageCli.CONTINENT_INFO.printMessage(sb2.toString());
   }
 
   /**
    * Finds the shortest route that can be done given the start and end countries.
-   * 
+   *
    * @param startCountry the country the user wishes to start at
    * @param endCountry the country the user wishes to end at
    * @return the shortest route in List<Country> form.
@@ -167,7 +183,7 @@ public class MapEngine {
     int counter = 0;
     queue.add(startCountry);
     travelledCountry.add(startCountry);
-    // this is the BFS algorithm which finds all countries that is connected to a country 
+    // this is the BFS algorithm which finds all countries that is connected to a country
     // that is connected to the start country.
     while (!queue.isEmpty()) {
       Country currentCountry = queue.poll();
@@ -182,11 +198,13 @@ public class MapEngine {
     // this part of the algorithm finds the smallest version of the route
     while (counter < travelledCountry.size()) {
       for (int m = 0; m < worldMap.getAdjacencies(travelledCountry.get(counter)).size(); m++) {
-        if (worldMap.getAdjacencies(travelledCountry.get(counter)).get(m)
+        if (worldMap
+            .getAdjacencies(travelledCountry.get(counter))
+            .get(m)
             .equals(currentTravelledCountry)) {
           shortestPath.add(currentTravelledCountry);
           currentTravelledCountry = travelledCountry.get(counter);
-          // if the current country is the start country we can deduce that the 
+          // if the current country is the start country we can deduce that the
           // path is finalised so we add the start country and return the path.
           if (currentTravelledCountry.equals(startCountry)) {
             shortestPath.add(startCountry);

@@ -91,15 +91,43 @@ public class MapEngine {
 
   /** this method is invoked when the user run the command route. */
   public void showRoute() {
+    String startCountryString, endCountryString;
     Country startCountry = null;
     Country endCountry = null;
-    String startCountryString, endCountryString;
-    List<Country> route = new ArrayList<>();
+    boolean countryFound = false;
     StringBuilder sb = new StringBuilder();
+    // asks for starting country;
     MessageCli.INSERT_SOURCE.printMessage();
     startCountryString = Utils.scanner.nextLine();
+    startCountryString = Utils.capitalizeFirstLetterOfEachWord(startCountryString);
+    while (countryFound == false) {
+      try {
+        countryExistCheck(startCountryString);
+        countryFound = true;
+      } catch (InvalidCountryException e) {
+        MessageCli.INVALID_COUNTRY.printMessage(startCountryString);
+        MessageCli.INSERT_COUNTRY.printMessage();
+        startCountryString = Utils.scanner.nextLine();
+        startCountryString = Utils.capitalizeFirstLetterOfEachWord(startCountryString);
+      }
+    }
+    countryFound = false;
+    // asks for end country;
     MessageCli.INSERT_DESTINATION.printMessage();
     endCountryString = Utils.scanner.nextLine();
+    endCountryString = Utils.capitalizeFirstLetterOfEachWord(endCountryString);
+    while (countryFound == false) {
+      try {
+        countryExistCheck(endCountryString);
+        countryFound = true;
+      } catch (InvalidCountryException e) {
+        MessageCli.INVALID_COUNTRY.printMessage(endCountryString);
+        MessageCli.INSERT_COUNTRY.printMessage();
+        endCountryString = Utils.scanner.nextLine();
+        endCountryString = Utils.capitalizeFirstLetterOfEachWord(endCountryString);
+      }
+    }
+    // finds the countries corresponding to the user input;
     for (int i = 0; i < countryList.size(); i++) {
       if (countryList.get(i).getName().equals(startCountryString)) {
         startCountry = countryList.get(i);
@@ -107,9 +135,12 @@ public class MapEngine {
         endCountry = countryList.get(i);
       }
     }
-    route = findRouteTravelled(startCountry, endCountry);
+    // calls the findRouteTravelled function to find the smallest route.
+    List<Country> route = findRouteTravelled(startCountry, endCountry);
+    // appends the route of countries into a string and reverses the order
+    // of the countries
     sb.append("[");
-    for (int l = route.size()-1; l > -1; l--) {
+    for (int l = (route.size() - 1); l > -1; l--) {
       sb.append(route.get(l));
       if (l == 0) {
         sb.append("]");
@@ -117,9 +148,17 @@ public class MapEngine {
         sb.append(", ");
       }
     }
+    // prints the route of the countries
     MessageCli.ROUTE_INFO.printMessage(sb.toString());
   }
 
+  /**
+   * Finds the shortest route that can be done given the start and end countries.
+   * 
+   * @param startCountry the country the user wishes to start at
+   * @param endCountry the country the user wishes to end at
+   * @return the shortest route in List<Country> form.
+   */
   public List<Country> findRouteTravelled(Country startCountry, Country endCountry) {
     List<Country> travelledCountry = new ArrayList<>();
     Queue<Country> queue = new LinkedList<>();
@@ -128,6 +167,8 @@ public class MapEngine {
     int counter = 0;
     queue.add(startCountry);
     travelledCountry.add(startCountry);
+    // this is the BFS algorithm which finds all countries that is connected to a country 
+    // that is connected to the start country.
     while (!queue.isEmpty()) {
       Country currentCountry = queue.poll();
       for (Country adjCountry : worldMap.getAdjacencies().get(currentCountry)) {
@@ -138,12 +179,16 @@ public class MapEngine {
       }
     }
     currentTravelledCountry = endCountry;
+    // this part of the algorithm finds the smallest version of the route
     while (counter < travelledCountry.size()) {
       for (int m = 0; m < worldMap.getAdjacencies(travelledCountry.get(counter)).size(); m++) {
-        if (worldMap.getAdjacencies(travelledCountry.get(counter)).get(m).equals(currentTravelledCountry)) {
+        if (worldMap.getAdjacencies(travelledCountry.get(counter)).get(m)
+            .equals(currentTravelledCountry)) {
           shortestPath.add(currentTravelledCountry);
           currentTravelledCountry = travelledCountry.get(counter);
-          if (currentTravelledCountry.equals(startCountry)){
+          // if the current country is the start country we can deduce that the 
+          // path is finalised so we add the start country and return the path.
+          if (currentTravelledCountry.equals(startCountry)) {
             shortestPath.add(startCountry);
             return shortestPath;
           }
